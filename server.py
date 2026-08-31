@@ -358,7 +358,9 @@ def get_admin_data(x_admin_secret: Optional[str] = Header(None)):
     return {
         "licenses": load_db(),
         "trials": load_trials(),
-        "state": load_app_state()
+        "state": load_app_state(),
+        "db_connected": (mongo_db is not None),
+        "db_provider": "MongoDB Atlas" if mongo_db is not None else "Local JSON"
     }
 
 @app.post("/api/admin/generate")

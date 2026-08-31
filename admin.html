@@ -13,7 +13,7 @@
 <body class="p-6 max-w-6xl mx-auto">
 
   <!-- Header -->
-  <div class="flex items-center justify-between border-b border-slate-800 pb-6 mb-8">
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xl text-cyan-400">⚡</div>
       <div>
@@ -21,7 +21,11 @@
         <p class="text-xs text-slate-400">ระบบควบคุม License Key, จัดการผู้ใช้ทดลองฟรี และปล่อยอัปเดตโปรแกรม</p>
       </div>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 flex-wrap">
+      <div id="mongoBadge" class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-lg font-semibold">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>🍃 MongoDB Atlas: เชื่อมต่อสำเร็จ</span>
+      </div>
       <input id="adminKey" type="password" placeholder="ใส่รหัส Admin Secret" class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" value="admin1234">
       <button onclick="fetchData()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm transition">🔄 รีเฟรช</button>
     </div>
@@ -245,6 +249,15 @@
             `;
             trialBody.appendChild(tr);
           });
+        }
+
+        const mongoBadge = document.getElementById('mongoBadge');
+        if (data.db_connected) {
+          mongoBadge.className = 'flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-lg font-semibold';
+          mongoBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>🍃 MongoDB Atlas: เชื่อมต่อสำเร็จ</span>';
+        } else {
+          mongoBadge.className = 'flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs px-3 py-2 rounded-lg font-semibold';
+          mongoBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>📁 Local JSON Fallback</span>';
         }
 
         document.getElementById('statActive').innerText = active;
