@@ -328,7 +328,15 @@ def get_license_or_trial_status(req: StatusRequest):
 
     # 1. Check if HWID is activated with Pro Key
     for k, info in db.items():
-        if info.get("hwid") == hwid and info.get("is_active", True):
+        if info.get("hwid") == hwid:
+            if not info.get("is_active", True):
+                return {
+                    "status": "suspended",
+                    "is_valid": False,
+                    "is_pro": False,
+                    "license_key": k,
+                    "message": "🚫 License Key ของคุณถูกระงับการใช้งานโดยผู้ดูแลระบบ"
+                }
             return {
                 "status": "pro",
                 "is_valid": True,
