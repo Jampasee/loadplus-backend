@@ -132,15 +132,23 @@
   <script>
     const API_BASE = window.location.origin;
 
-    function getAdminHeader() {
-      return { 'x-admin-secret': document.getElementById('adminKey').value.trim() };
+    // Auto-load saved key from localStorage if available
+    const savedKey = localStorage.getItem('lp_admin_key');
+    if (savedKey) {
+      document.getElementById('adminKey').value = savedKey;
     }
 
-    async function fetchData() {
+    function getAdminHeader() {
+      const key = document.getElementById('adminKey').value.trim() || 'admin1234';
+      localStorage.setItem('lp_admin_key', key);
+      return { 'x-admin-secret': key };
+    }
+
+    async function fetchData(silent = false) {
       try {
         const res = await fetch(`${API_BASE}/api/admin/data`, { headers: getAdminHeader() });
         if (!res.ok) {
-          alert("รหัส Admin Secret ไม่ถูกต้อง!");
+          if (!silent) alert("รหัส Admin Secret ไม่ถูกต้อง! (รหัสเริ่มต้นคือ admin1234)");
           return;
         }
         const data = await res.json();
@@ -222,7 +230,7 @@
         const data = await res.json();
         alert(`🎉 สร้างสำเร็จ ${data.count} คีย์!\n\n` + data.keys.join('\n'));
         document.getElementById('genNote').value = '';
-        fetchData();
+        fetchData(true);
       } else {
         alert("เกิดข้อผิดพลาดในการสร้างคีย์");
       }
@@ -235,7 +243,7 @@
         headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reset_hwid', key })
       });
-      if (res.ok) { alert("ปลดล็อก HWID สำเร็จ! ลูกค้าสามารถนำคีย์ไปใส่เครื่องใหม่ได้แล้ว"); fetchData(); }
+      if (res.ok) { alert("ปลดล็อก HWID สำเร็จ! ลูกค้าสามารถนำคีย์ไปใส่เครื่องใหม่ได้แล้ว"); fetchData(true); }
     }
 
     async function toggleKeyStatus(key, enable) {
@@ -244,7 +252,7 @@
         headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'toggle_status', key, is_active: enable })
       });
-      if (res.ok) { fetchData(); }
+      if (res.ok) { fetchData(true); }
     }
 
     async function deleteKey(key) {
@@ -254,7 +262,7 @@
         headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete_key', key })
       });
-      if (res.ok) { fetchData(); }
+      if (res.ok) { fetchData(true); }
     }
 
     async function publishUpdate() {
@@ -270,11 +278,11 @@
 
       if (res.ok) {
         alert("📢 ปล่อยเวอร์ชันอัปเดตเรียบร้อย! โปรแกรมของผู้ใช้ทุกคนจะได้รับการแจ้งเตือนอัตโนมัติ");
-        fetchData();
+        fetchData(true);
       }
     }
 
-    fetchData();
+    fetchData(true);
   </script>
 </body>
 </html>
