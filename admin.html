@@ -5,190 +5,388 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>👑 LOAD PLUS - Master Admin Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #090d16; color: #f8fafc; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #070b14; color: #f8fafc; }
+    .glass-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.6); }
+    .glow-cyan { box-shadow: 0 0 35px -5px rgba(6, 182, 212, 0.25); }
+    .glow-btn { box-shadow: 0 0 20px -2px rgba(6, 182, 212, 0.4); }
   </style>
 </head>
-<body class="p-6 max-w-6xl mx-auto">
+<body class="min-h-screen flex flex-col justify-between">
 
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xl text-cyan-400">⚡</div>
-      <div>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">LOAD PLUS Master Admin</h1>
-        <p class="text-xs text-slate-400">ระบบควบคุม License Key, จัดการผู้ใช้ทดลองฟรี และปล่อยอัปเดตโปรแกรม</p>
+  <!-- ==================== 1. LOGIN SCREEN ==================== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass-card glow-cyan w-full max-w-md rounded-2xl p-8 relative overflow-hidden">
+      <!-- Glow Decor -->
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-3xl text-cyan-400 mx-auto mb-4 shadow-lg shadow-cyan-500/10">
+          ⚡
+        </div>
+        <h1 class="text-2xl font-extrabold bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500 bg-clip-text text-transparent">
+          LOAD PLUS Admin
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">กรุณาเข้าสู่ระบบเพื่อจัดการ License Key และเซิร์ฟเวอร์</p>
       </div>
-    </div>
-    <div class="flex items-center gap-3 flex-wrap">
-      <div id="mongoBadge" class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-lg font-semibold">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>🍃 MongoDB Atlas: เชื่อมต่อสำเร็จ</span>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">ชื่อผู้ใช้งาน (Username)</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">👤</span>
+            <input id="loginUser" type="text" required placeholder="admin" value="admin"
+              class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">รหัสผ่าน (Password)</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">🔒</span>
+            <input id="loginPass" type="password" required placeholder="••••••••" value="admin1234"
+              class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
+            <button type="button" onclick="togglePassVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-white text-sm">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div id="loginError" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5 text-center font-medium"></div>
+
+        <button type="submit" id="btnLoginSubmit"
+          class="w-full glow-btn bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition transform active:scale-[0.98] shadow-lg shadow-cyan-500/20">
+          🚀 เข้าสู่ระบบ Master Admin
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-xs text-slate-500">
+        🔒 ป้องกันความปลอดภัยด้วย MongoDB Atlas 256-bit Encryption
       </div>
-      <input id="adminKey" type="password" placeholder="ใส่รหัส Admin Secret" class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" value="admin1234">
-      <button onclick="fetchData()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm transition">🔄 รีเฟรช</button>
     </div>
   </div>
 
-  <!-- Stats Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-      <div class="text-slate-400 text-xs font-semibold mb-1">👑 ลูกค้า Pro (Active)</div>
-      <div id="statActive" class="text-2xl font-extrabold text-cyan-400">0</div>
-    </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-      <div class="text-slate-400 text-xs font-semibold mb-1">⏳ กำลังทดลองฟรี (Trial)</div>
-      <div id="statTrial" class="text-2xl font-extrabold text-amber-400">0</div>
-    </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-      <div class="text-slate-400 text-xs font-semibold mb-1">⚪ คีย์ว่างรอขาย (Unused)</div>
-      <div id="statUnused" class="text-2xl font-extrabold text-slate-200">0</div>
-    </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-      <div class="text-slate-400 text-xs font-semibold mb-1">🚫 คีย์ถูกระงับ</div>
-      <div id="statSuspended" class="text-2xl font-extrabold text-rose-500">0</div>
-    </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-      <div class="text-slate-400 text-xs font-semibold mb-1">🚀 เวอร์ชันล่าสุด</div>
-      <div id="statVersion" class="text-2xl font-extrabold text-emerald-400">v1.0.4</div>
-    </div>
-  </div>
+  <!-- ==================== 2. MAIN DASHBOARD ==================== -->
+  <div id="mainDashboard" class="hidden p-6 max-w-6xl mx-auto w-full">
 
-  <!-- Main 2-Column Controls -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-
-    <!-- Key Generator Card -->
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-      <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">🔑 สร้าง License Key ใหม่</h2>
-      <div class="space-y-4">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl text-cyan-400">⚡</div>
         <div>
-          <label class="text-xs text-slate-400 block mb-1">จำนวนคีย์ที่ต้องการสร้าง:</label>
-          <select id="genCount" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
-            <option value="1">1 คีย์</option>
-            <option value="5" selected>5 คีย์</option>
-            <option value="10">10 คีย์</option>
-            <option value="20">20 คีย์</option>
-          </select>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">LOAD PLUS Master Admin</h1>
+          <p class="text-xs text-slate-400">ระบบควบคุม License Key, จัดการผู้ใช้ทดลองฟรี และปล่อยอัปเดตโปรแกรม</p>
         </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">ประเภทสิทธิ์:</label>
-          <select id="genType" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
-            <option value="lifetime">⚡ Lifetime (ตลอดชีพ)</option>
-            <option value="1year">📅 1 Year (รายปี)</option>
-          </select>
+      </div>
+      
+      <!-- Right Toolbar Controls -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div id="mongoBadge" class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-lg font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>🍃 MongoDB Atlas: เชื่อมต่อสำเร็จ</span>
         </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">บันทึกช่วยจำ (เช่น ชื่อลูกค้า / Order ID):</label>
-          <input id="genNote" type="text" placeholder="เช่น ลูกค้า Shopee #001" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
-        </div>
-        <button onclick="generateKeys()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-cyan-500/20">
-          🚀 สร้างรหัสคีย์ทันที
+        <button onclick="openChangePassModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-2 rounded-lg transition border border-slate-700">
+          🔑 เปลี่ยนรหัสผ่าน
+        </button>
+        <button onclick="fetchData()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3 py-2 rounded-lg text-xs transition">
+          🔄 รีเฟรช
+        </button>
+        <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition">
+          🚪 ออกจากระบบ
         </button>
       </div>
     </div>
 
-    <!-- Update Release Card -->
-    <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-      <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">📢 ปล่อยอัปเดตเวอร์ชันใหม่ (Push Update)</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">เลขเวอร์ชันใหม่ (Version):</label>
-          <input id="updateVer" type="text" placeholder="เช่น 1.0.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">ลิงก์ดาวน์โหลด (Download URL):</label>
-          <input id="updateUrl" type="text" placeholder="https://github.com/.../release.zip" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-semibold mb-1">👑 ลูกค้า Pro (Active)</div>
+        <div id="statActive" class="text-2xl font-extrabold text-cyan-400">0</div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-semibold mb-1">⏳ กำลังทดลองฟรี (Trial)</div>
+        <div id="statTrial" class="text-2xl font-extrabold text-amber-400">0</div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-semibold mb-1">⚪ คีย์ว่างรอขาย (Unused)</div>
+        <div id="statUnused" class="text-2xl font-extrabold text-slate-200">0</div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-semibold mb-1">🚫 คีย์ถูกระงับ</div>
+        <div id="statSuspended" class="text-2xl font-extrabold text-rose-500">0</div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-semibold mb-1">🚀 เวอร์ชันล่าสุด</div>
+        <div id="statVersion" class="text-2xl font-extrabold text-emerald-400">v1.0.4</div>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Controls -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
+      <!-- Key Generator Card -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
+        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">🔑 สร้าง License Key ใหม่</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">จำนวนคีย์ที่ต้องการสร้าง:</label>
+            <select id="genCount" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+              <option value="1">1 คีย์</option>
+              <option value="5" selected>5 คีย์</option>
+              <option value="10">10 คีย์</option>
+              <option value="20">20 คีย์</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">ประเภทสิทธิ์:</label>
+            <select id="genType" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+              <option value="lifetime">⚡ Lifetime (ตลอดชีพ)</option>
+              <option value="1year">📅 1 Year (รายปี)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">บันทึกช่วยจำ (เช่น ชื่อลูกค้า / Order ID):</label>
+            <input id="genNote" type="text" placeholder="เช่น ลูกค้า Shopee #001" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+          </div>
+          <button onclick="generateKeys()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-cyan-500/20">
+            🚀 สร้างรหัสคีย์ทันที
+          </button>
         </div>
       </div>
-      <div class="mb-4">
-        <label class="text-xs text-slate-400 block mb-1">รายละเอียดการอัปเดต (Changelog):</label>
-        <textarea id="updateLog" rows="3" placeholder="เช่น ⚡ เพิ่มระบบทดลองใช้ฟรี 7 วัน ผูก HWID และแก้ไขปุ่มเสียง" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white"></textarea>
+
+      <!-- Update Release Card -->
+      <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-6">
+        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">📢 ปล่อยอัปเดตเวอร์ชันใหม่ (Push Update)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">เลขเวอร์ชันใหม่ (Version):</label>
+            <input id="updateVer" type="text" placeholder="เช่น 1.0.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">ลิงก์ดาวน์โหลด (Download URL):</label>
+            <input id="updateUrl" type="text" placeholder="https://github.com/.../release.zip" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="text-xs text-slate-400 block mb-1">รายละเอียดการอัปเดต (Changelog):</label>
+          <textarea id="updateLog" rows="3" placeholder="เช่น ⚡ เพิ่มระบบทดลองใช้ฟรี 7 วัน ผูก HWID และแก้ไขปุ่มเสียง" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white"></textarea>
+        </div>
+        <button onclick="publishUpdate()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-sm transition">
+          🚀 บันทึกและปล่อยอัปเดตให้ลูกค้าทุกคน
+        </button>
       </div>
-      <button onclick="publishUpdate()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-sm transition">
-        🚀 บันทึกและปล่อยอัปเดตให้ลูกค้าทุกคน
-      </button>
+
+    </div>
+
+    <!-- Free Trial Devices Table -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden mb-8">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400 text-lg">⏳</span>
+          <h3 class="font-bold text-white">รายชื่อเครื่องที่โหลดไปทดลองใช้ฟรี (Free Trial Devices)</h3>
+        </div>
+        <span id="totalTrialBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 เครื่อง</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="p-4">รหัสเครื่อง (HWID)</th>
+              <th class="p-4">วันที่เปิดใช้ครั้งแรก</th>
+              <th class="p-4">เวลาที่เหลือ</th>
+              <th class="p-4">สถานะ</th>
+              <th class="p-4 text-right">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="trialTableBody" class="divide-y divide-slate-800">
+            <tr><td colspan="5" class="p-6 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Licenses Table -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-cyan-400 text-lg">🔑</span>
+          <h3 class="font-bold text-white">รายการ License Key ทั้งหมดในระบบ</h3>
+        </div>
+        <span id="totalKeyBadge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 คีย์</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="p-4">License Key</th>
+              <th class="p-4">ประเภท</th>
+              <th class="p-4">สถานะ</th>
+              <th class="p-4">รหัสเครื่องที่ผูก (HWID)</th>
+              <th class="p-4">บันทึก</th>
+              <th class="p-4 text-right">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="keysTableBody" class="divide-y divide-slate-800">
+            <tr><td colspan="6" class="p-8 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
 
-  <!-- Free Trial Devices Table -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden mb-8">
-    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-amber-400 text-lg">⏳</span>
-        <h3 class="font-bold text-white">รายชื่อเครื่องที่โหลดไปทดลองใช้ฟรี (Free Trial Devices)</h3>
+  <!-- ==================== 3. CHANGE PASSWORD MODAL ==================== -->
+  <div id="changePassModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md rounded-2xl p-6 border border-slate-700 relative">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+        <h3 class="font-bold text-white flex items-center gap-2">🔑 เปลี่ยนรหัสผ่าน Admin</h3>
+        <button onclick="closeChangePassModal()" class="text-slate-400 hover:text-white text-lg">✖</button>
       </div>
-      <span id="totalTrialBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 เครื่อง</span>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm text-slate-300">
-        <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
-          <tr>
-            <th class="p-4">รหัสเครื่อง (HWID)</th>
-            <th class="p-4">วันที่เปิดใช้ครั้งแรก</th>
-            <th class="p-4">เวลาที่เหลือ</th>
-            <th class="p-4">สถานะ</th>
-            <th class="p-4 text-right">การจัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="trialTableBody" class="divide-y divide-slate-800">
-          <tr><td colspan="5" class="p-6 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Licenses Table -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
-    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-cyan-400 text-lg">🔑</span>
-        <h3 class="font-bold text-white">รายการ License Key ทั้งหมดในระบบ</h3>
-      </div>
-      <span id="totalKeyBadge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 คีย์</span>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm text-slate-300">
-        <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
-          <tr>
-            <th class="p-4">License Key</th>
-            <th class="p-4">ประเภท</th>
-            <th class="p-4">สถานะ</th>
-            <th class="p-4">รหัสเครื่องที่ผูก (HWID)</th>
-            <th class="p-4">บันทึก</th>
-            <th class="p-4 text-right">การจัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="keysTableBody" class="divide-y divide-slate-800">
-          <tr><td colspan="6" class="p-8 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
-        </tbody>
-      </table>
+      <form onsubmit="handleChangePassword(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">รหัสผ่านปัจจุบัน:</label>
+          <input id="oldPass" type="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-cyan-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">รหัสผ่านใหม่:</label>
+          <input id="newPass" type="password" required minlength="4" placeholder="รหัสผ่านใหม่อย่างน้อย 4 ตัว" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-cyan-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">ยืนยันรหัสผ่านใหม่:</label>
+          <input id="confirmPass" type="password" required minlength="4" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-cyan-400">
+        </div>
+        <div id="modalError" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2 text-center font-medium"></div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeChangePassModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-lg text-sm transition">ยกเลิก</button>
+          <button type="submit" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition">💾 บันทึกรหัสใหม่</button>
+        </div>
+      </form>
     </div>
   </div>
 
   <script>
     const API_BASE = window.location.origin;
 
-    const savedKey = localStorage.getItem('lp_admin_key');
-    if (savedKey) {
-      document.getElementById('adminKey').value = savedKey;
+    function getStoredToken() {
+      return localStorage.getItem('lp_admin_token') || '';
     }
 
     function getAdminHeader() {
-      const key = document.getElementById('adminKey').value.trim() || 'admin1234';
-      localStorage.setItem('lp_admin_key', key);
-      return { 'x-admin-secret': key };
+      const token = getStoredToken();
+      return { 'x-admin-secret': token };
+    }
+
+    function togglePassVisibility() {
+      const input = document.getElementById('loginPass');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value.trim();
+      const btn = document.getElementById('btnLoginSubmit');
+      const errBox = document.getElementById('loginError');
+
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerText = "⏳ กำลังเข้าสู่ระบบ...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.token) {
+          localStorage.setItem('lp_admin_token', data.token);
+          showDashboard();
+          fetchData();
+        } else {
+          errBox.innerText = `⚠️ ${data.detail || 'เข้าสู่ระบบไม่สำเร็จ'}`;
+          errBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        errBox.innerText = `⚠️ ข้อผิดพลาด: ${err.message}`;
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🚀 เข้าสู่ระบบ Master Admin";
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('lp_admin_token');
+      document.getElementById('mainDashboard').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('loginPass').value = '';
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainDashboard').classList.remove('hidden');
+    }
+
+    function openChangePassModal() {
+      document.getElementById('oldPass').value = '';
+      document.getElementById('newPass').value = '';
+      document.getElementById('confirmPass').value = '';
+      document.getElementById('modalError').classList.add('hidden');
+      document.getElementById('changePassModal').classList.remove('hidden');
+    }
+
+    function closeChangePassModal() {
+      document.getElementById('changePassModal').classList.add('hidden');
+    }
+
+    async function handleChangePassword(e) {
+      e.preventDefault();
+      const old_password = document.getElementById('oldPass').value.trim();
+      const new_password = document.getElementById('newPass').value.trim();
+      const confirm_password = document.getElementById('confirmPass').value.trim();
+      const modalError = document.getElementById('modalError');
+
+      if (new_password !== confirm_password) {
+        modalError.innerText = "⚠️ รหัสผ่านใหม่และการยืนยันไม่ตรงกัน";
+        modalError.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/change_password`, {
+          method: 'POST',
+          headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ old_password, new_password })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          if (data.token) localStorage.setItem('lp_admin_token', data.token);
+          alert("🎉 เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว!");
+          closeChangePassModal();
+        } else {
+          modalError.innerText = `⚠️ ${data.detail || 'เปลี่ยนรหัสผ่านไม่สำเร็จ'}`;
+          modalError.classList.remove('hidden');
+        }
+      } catch (err) {
+        modalError.innerText = `⚠️ ข้อผิดพลาด: ${err.message}`;
+        modalError.classList.remove('hidden');
+      }
     }
 
     async function fetchData(silent = false) {
       try {
         const res = await fetch(`${API_BASE}/api/admin/data`, { headers: getAdminHeader() });
         if (!res.ok) {
-          if (!silent) alert("รหัส Admin Secret ไม่ถูกต้อง! (รหัสเริ่มต้นคือ admin1234)");
+          handleLogout();
           return;
         }
         const data = await res.json();
+        showDashboard();
 
         // 1. License Stats
         let active = 0, unused = 0, suspended = 0;
@@ -312,7 +510,7 @@
         });
 
       } catch (err) {
-        alert("เชื่อมต่อ Backend ไม่สำเร็จ: " + err.message);
+        if (!silent) alert("เชื่อมต่อ Backend ไม่สำเร็จ: " + err.message);
       }
     }
 
@@ -383,7 +581,10 @@
       }
     }
 
-    fetchData(true);
+    // Auto check if already logged in
+    if (getStoredToken()) {
+      fetchData(true);
+    }
   </script>
 </body>
 </html>

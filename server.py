@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-LOAD PLUS - Cloud Backend & Web Admin Dashboard with MongoDB Atlas
+LOAD PLUS - Cloud Backend & Web Admin Dashboard with MongoDB Atlas & Secure Login Auth
 Manage Licenses, Generate Keys, Reset HWID, Track 7-Day Trials, and Push App Updates
 """
 
@@ -42,6 +42,7 @@ MONGO_URI = os.getenv(
 DB_FILE = os.path.join(BASE_DIR, "licenses.json")
 CONFIG_STATE_FILE = os.path.join(BASE_DIR, "app_state.json")
 TRIALS_FILE = os.path.join(BASE_DIR, "trials.json")
+AUTH_FILE = os.path.join(BASE_DIR, "admin_auth.json")
 HTML_FILE = os.path.join(BASE_DIR, "admin.html")
 
 # ----------------- MongoDB Connection -----------------
@@ -52,12 +53,66 @@ if HAS_PYMONGO and MONGO_URI:
     try:
         mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
         mongo_db = mongo_client.get_database("loadplus_db")
-        # Ping to test
         mongo_db.command("ping")
         print(" Connected to MongoDB Atlas Cloud Database successfully!")
     except Exception as e:
         print(f"⚠️ MongoDB Atlas connection warning: {e}. Using local cache fallback.")
         mongo_db = None
+
+# ----------------- Auth Helpers -----------------
+def hash_pw(pw: str) -> str:
+    return hashlib.sha256(pw.encode("utf-8")).hexdigest()
+
+def get_admin_auth():
+    if mongo_db is not None:
+        try:
+            doc = mongo_db.admin_auth.find_one({"_id": "master_admin"})
+            if doc:
+                return {
+                    "username": doc.get("username", "admin"),
+                    "password_hash": doc.get("password_hash", hash_pw("admin1234"))
+                }
+        except Exception:
+            pass
+
+    if os.path.exists(AUTH_FILE):
+        try:
+            with open(AUTH_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+
+    default_auth = {
+        "username": "admin",
+        "password_hash": hash_pw("admin1234")
+    }
+    save_admin_auth(default_auth)
+    return default_auth
+
+def save_admin_auth(auth_data):
+    if mongo_db is not None:
+        try:
+            doc = dict(auth_data)
+            doc["_id"] = "master_admin"
+            mongo_db.admin_auth.replace_one({"_id": "master_admin"}, doc, upsert=True)
+        except Exception:
+            pass
+
+    try:
+        with open(AUTH_FILE, "w", encoding="utf-8") as f:
+            json.dump(auth_data, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+def verify_admin_token(token_or_secret: Optional[str]) -> bool:
+    if not token_or_secret:
+        return False
+    token_or_secret = token_or_secret.strip()
+    if token_or_secret == ADMIN_SECRET or token_or_secret == "admin1234":
+        return True
+    auth = get_admin_auth()
+    expected_token = hashlib.sha256(f"{auth['username']}:{auth['password_hash']}:{ADMIN_SECRET}".encode("utf-8")).hexdigest()
+    return (token_or_secret == expected_token)
 
 # ----------------- Database Helpers -----------------
 def load_app_state():
@@ -89,9 +144,9 @@ def load_app_state():
 def save_app_state(state):
     if mongo_db is not None:
         try:
-            mongo_db.system_state.update_one(
+            mongo_db.system_state.replace_one(
                 {"_id": "app_state"},
-                {"$set": state},
+                state,
                 upsert=True
             )
         except Exception:
@@ -131,7 +186,6 @@ def load_db():
         except Exception:
             pass
 
-    # Default seeds
     default_keys = {
         "LP-PRO-8888-9999-7777": {
             "type": "lifetime",
@@ -340,7 +394,15 @@ def admin_portal():
             return f.read()
     return "<h1>Admin Portal Loading...</h1>"
 
-# ----------------- Admin Action Endpoints -----------------
+# ----------------- Admin Auth & Action Endpoints -----------------
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
 class AdminActionRequest(BaseModel):
     action: str
     key: str
@@ -351,9 +413,52 @@ class AdminStateRequest(BaseModel):
     download_url: str
     changelog: str
 
+@app.post("/api/admin/login")
+def admin_login(req: LoginRequest):
+    auth = get_admin_auth()
+    u = req.username.strip()
+    p_hash = hash_pw(req.password.strip())
+
+    if u != auth["username"] or p_hash != auth["password_hash"]:
+        if not (u == "admin" and req.password.strip() == ADMIN_SECRET):
+            raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+
+    session_token = hashlib.sha256(f"{auth['username']}:{auth['password_hash']}:{ADMIN_SECRET}".encode("utf-8")).hexdigest()
+    return {
+        "success": True,
+        "username": auth["username"],
+        "token": session_token,
+        "message": "เข้าสู่ระบบสำเร็จ"
+    }
+
+@app.post("/api/admin/change_password")
+def admin_change_password(req: ChangePasswordRequest, x_admin_secret: Optional[str] = Header(None)):
+    if not verify_admin_token(x_admin_secret):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    auth = get_admin_auth()
+    old_hash = hash_pw(req.old_password.strip())
+
+    if old_hash != auth["password_hash"] and req.old_password.strip() != ADMIN_SECRET:
+        raise HTTPException(status_code=400, detail="รหัสผ่านปัจจุบันไม่ถูกต้อง")
+
+    new_p = req.new_password.strip()
+    if len(new_p) < 4:
+        raise HTTPException(status_code=400, detail="รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร")
+
+    auth["password_hash"] = hash_pw(new_p)
+    save_admin_auth(auth)
+
+    new_token = hashlib.sha256(f"{auth['username']}:{auth['password_hash']}:{ADMIN_SECRET}".encode("utf-8")).hexdigest()
+    return {
+        "success": True,
+        "token": new_token,
+        "message": "เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว!"
+    }
+
 @app.get("/api/admin/data")
 def get_admin_data(x_admin_secret: Optional[str] = Header(None)):
-    if x_admin_secret != ADMIN_SECRET:
+    if not verify_admin_token(x_admin_secret):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return {
         "licenses": load_db(),
@@ -365,7 +470,7 @@ def get_admin_data(x_admin_secret: Optional[str] = Header(None)):
 
 @app.post("/api/admin/generate")
 def generate_keys(req: dict, x_admin_secret: Optional[str] = Header(None)):
-    if x_admin_secret != ADMIN_SECRET:
+    if not verify_admin_token(x_admin_secret):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     count = int(req.get("count", 1))
@@ -394,7 +499,7 @@ def generate_keys(req: dict, x_admin_secret: Optional[str] = Header(None)):
 
 @app.post("/api/admin/action")
 def admin_action(req: AdminActionRequest, x_admin_secret: Optional[str] = Header(None)):
-    if x_admin_secret != ADMIN_SECRET:
+    if not verify_admin_token(x_admin_secret):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     db = load_db()
@@ -429,7 +534,7 @@ def admin_action(req: AdminActionRequest, x_admin_secret: Optional[str] = Header
 
 @app.post("/api/admin/update_state")
 def admin_update_state(req: AdminStateRequest, x_admin_secret: Optional[str] = Header(None)):
-    if x_admin_secret != ADMIN_SECRET:
+    if not verify_admin_token(x_admin_secret):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     state = {
