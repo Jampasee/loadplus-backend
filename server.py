@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-LOAD PLUS - Cloud Backend & Web Admin Dashboard
-Manage Licenses, Generate Keys, Reset HWID, and Push Instant App Updates
+LOAD PLUS - Cloud Backend & Web Admin Dashboard with MongoDB Atlas
+Manage Licenses, Generate Keys, Reset HWID, Track 7-Day Trials, and Push App Updates
 """
 
 import os
@@ -15,7 +15,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-app = FastAPI(title="LOAD PLUS Cloud Authority", version="1.0.0")
+try:
+    from pymongo import MongoClient
+    HAS_PYMONGO = True
+except ImportError:
+    HAS_PYMONGO = False
+
+app = FastAPI(title="LOAD PLUS Cloud Authority", version="1.0.4")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,24 +33,70 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ADMIN_SECRET = os.getenv("ADMIN_SECRET", "admin1234")
+MONGO_URI = os.getenv(
+    "MONGO_URI",
+    "mongodb+srv://jampasee1999_db_user:ObqThz6cC9ioUNhO@cluster0.a5flpca.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+)
+
+# Local fallback files
 DB_FILE = os.path.join(BASE_DIR, "licenses.json")
 CONFIG_STATE_FILE = os.path.join(BASE_DIR, "app_state.json")
+TRIALS_FILE = os.path.join(BASE_DIR, "trials.json")
 HTML_FILE = os.path.join(BASE_DIR, "admin.html")
 
+# ----------------- MongoDB Connection -----------------
+mongo_client = None
+mongo_db = None
+
+if HAS_PYMONGO and MONGO_URI:
+    try:
+        mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        mongo_db = mongo_client.get_database("loadplus_db")
+        # Ping to test
+        mongo_db.command("ping")
+        print(" Connected to MongoDB Atlas Cloud Database successfully!")
+    except Exception as e:
+        print(f"⚠️ MongoDB Atlas connection warning: {e}. Using local cache fallback.")
+        mongo_db = None
+
+# ----------------- Database Helpers -----------------
 def load_app_state():
+    if mongo_db is not None:
+        try:
+            doc = mongo_db.system_state.find_one({"_id": "app_state"})
+            if doc:
+                return {
+                    "latest_version": doc.get("latest_version", "1.0.4"),
+                    "changelog": doc.get("changelog", "🚀 ปล่อยอัปเดตเวอร์ชันใหม่ล่าสุด"),
+                    "download_url": doc.get("download_url", "https://github.com/Jampasee/loadplus-backend/releases/latest")
+                }
+        except Exception:
+            pass
+
     if os.path.exists(CONFIG_STATE_FILE):
         try:
             with open(CONFIG_STATE_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             pass
+
     return {
-        "latest_version": "1.0.0",
-        "changelog": "🚀 เวอร์ชันแรกพร้อมระบบ Multi-threading 32 ท่อ และ 1080p Video Grabber",
-        "download_url": "https://github.com/loadplus/load-plus/releases/latest"
+        "latest_version": "1.0.4",
+        "changelog": "🚀 อัปเดต v1.0.4: เพิ่มระบบทดลองใช้ฟรี 7 วัน ผูก HWID, ตัวนับถอยหลัง Real-time และแก้ปุ่มเสียง",
+        "download_url": "https://github.com/Jampasee/loadplus-backend/releases/download/v1.0.4/LOAD_PLUS_Setup.exe"
     }
 
 def save_app_state(state):
+    if mongo_db is not None:
+        try:
+            mongo_db.system_state.update_one(
+                {"_id": "app_state"},
+                {"$set": state},
+                upsert=True
+            )
+        except Exception:
+            pass
+
     try:
         with open(CONFIG_STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2, ensure_ascii=False)
@@ -52,13 +104,35 @@ def save_app_state(state):
         pass
 
 def load_db():
+    """Loads all License Keys"""
+    if mongo_db is not None:
+        try:
+            res = {}
+            for doc in mongo_db.licenses.find():
+                k = doc.get("_id")
+                if k:
+                    res[k] = {
+                        "type": doc.get("type", "lifetime"),
+                        "created_at": doc.get("created_at", ""),
+                        "activated_at": doc.get("activated_at"),
+                        "hwid": doc.get("hwid"),
+                        "is_active": doc.get("is_active", True),
+                        "note": doc.get("note", "")
+                    }
+            if res:
+                return res
+        except Exception:
+            pass
+
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             pass
-    return {
+
+    # Default seeds
+    default_keys = {
         "LP-PRO-8888-9999-7777": {
             "type": "lifetime",
             "created_at": "2026-08-31 10:00:00",
@@ -74,10 +148,63 @@ def load_db():
             "note": "Customer Key #001"
         }
     }
+    save_db(default_keys)
+    return default_keys
 
 def save_db(data):
+    if mongo_db is not None:
+        try:
+            for k, info in data.items():
+                doc = dict(info)
+                doc["_id"] = k
+                mongo_db.licenses.update_one({"_id": k}, {"$set": doc}, upsert=True)
+        except Exception:
+            pass
+
     try:
         with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+def load_trials():
+    """Loads all HWID Free Trial devices"""
+    if mongo_db is not None:
+        try:
+            res = {}
+            for doc in mongo_db.trials.find():
+                hwid = doc.get("_id")
+                if hwid:
+                    res[hwid] = {
+                        "first_seen": doc.get("first_seen"),
+                        "first_seen_str": doc.get("first_seen_str", ""),
+                        "trial_days": doc.get("trial_days", 7)
+                    }
+            if res:
+                return res
+        except Exception:
+            pass
+
+    if os.path.exists(TRIALS_FILE):
+        try:
+            with open(TRIALS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+def save_trials(data):
+    if mongo_db is not None:
+        try:
+            for hwid, info in data.items():
+                doc = dict(info)
+                doc["_id"] = hwid
+                mongo_db.trials.update_one({"_id": hwid}, {"$set": doc}, upsert=True)
+        except Exception:
+            pass
+
+    try:
+        with open(TRIALS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
     except Exception:
         pass
@@ -86,18 +213,19 @@ def save_db(data):
 class ActivateRequest(BaseModel):
     license_key: str
     hwid: str
-    app_version: Optional[str] = "1.0.0"
+    app_version: Optional[str] = "1.0.4"
 
-class VerifyRequest(BaseModel):
-    license_key: str
+class StatusRequest(BaseModel):
     hwid: str
+    license_key: Optional[str] = None
+    app_version: Optional[str] = "1.0.4"
 
 @app.get("/")
 def health_check():
     state = load_app_state()
     return {
         "status": "online",
-        "service": "LOAD PLUS Cloud Authority",
+        "service": "LOAD PLUS Cloud Authority (MongoDB Powered)",
         "timestamp": int(time.time()),
         "latest_version": state["latest_version"]
     }
@@ -119,7 +247,7 @@ def activate_license(req: ActivateRequest):
     if bound_hwid and bound_hwid != hwid:
         raise HTTPException(
             status_code=409,
-            detail="License Key นี้ถูกเปิดใช้งานบนคอมพิวเตอร์เครื่องอื่นแล้ว กรุณาติดต่อแอดมินเพื่อปลดล็อก"
+            detail="License Key นี้ถูกเปิดใช้งานบนคอมพิวเตอร์เครื่องอื่นแล้ว กรุณาติดต่อแอดมินเพื่อปลดล็อกย้ายเครื่อง"
         )
 
     info["hwid"] = hwid
@@ -137,29 +265,6 @@ def activate_license(req: ActivateRequest):
         "license_type": info.get("type", "lifetime"),
         "token": token
     }
-
-TRIALS_FILE = os.path.join(BASE_DIR, "trials.json")
-
-def load_trials():
-    if os.path.exists(TRIALS_FILE):
-        try:
-            with open(TRIALS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
-
-def save_trials(data):
-    try:
-        with open(TRIALS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-    except Exception:
-        pass
-
-class StatusRequest(BaseModel):
-    hwid: str
-    license_key: Optional[str] = None
-    app_version: Optional[str] = "1.0.3"
 
 @app.post("/api/license/status")
 def get_license_or_trial_status(req: StatusRequest):
@@ -211,6 +316,7 @@ def get_license_or_trial_status(req: StatusRequest):
             "is_valid": False,
             "is_pro": False,
             "days_left": 0,
+            "seconds_left": 0,
             "message": "ระยะเวลาทดลองใช้ฟรี 7 วันของคุณหมดอายุแล้ว กรุณากรอก License Key เพื่อใช้งานต่อ"
         }
 
@@ -296,10 +402,25 @@ def admin_action(req: AdminActionRequest, x_admin_secret: Optional[str] = Header
 
     if req.action == "reset_hwid":
         db[k]["hwid"] = None
+        if mongo_db is not None:
+            try:
+                mongo_db.licenses.update_one({"_id": k}, {"$set": {"hwid": None}})
+            except Exception:
+                pass
     elif req.action == "toggle_status":
         db[k]["is_active"] = req.is_active
+        if mongo_db is not None:
+            try:
+                mongo_db.licenses.update_one({"_id": k}, {"$set": {"is_active": req.is_active}})
+            except Exception:
+                pass
     elif req.action == "delete_key":
         del db[k]
+        if mongo_db is not None:
+            try:
+                mongo_db.licenses.delete_one({"_id": k})
+            except Exception:
+                pass
 
     save_db(db)
     return {"success": True}
