@@ -251,6 +251,7 @@ def get_admin_data(x_admin_secret: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return {
         "licenses": load_db(),
+        "trials": load_trials(),
         "state": load_app_state()
     }
 
