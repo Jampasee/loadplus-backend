@@ -138,31 +138,81 @@ def activate_license(req: ActivateRequest):
         "token": token
     }
 
-@app.post("/api/license/verify")
-def verify_license(req: VerifyRequest):
-    db = load_db()
-    key = req.license_key.strip().upper()
+TRIALS_FILE = os.path.join(BASE_DIR, "trials.json")
+
+def load_trials():
+    if os.path.exists(TRIALS_FILE):
+        try:
+            with open(TRIALS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+def save_trials(data):
+    try:
+        with open(TRIALS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+class StatusRequest(BaseModel):
+    hwid: str
+    license_key: Optional[str] = None
+    app_version: Optional[str] = "1.0.3"
+
+@app.post("/api/license/status")
+def get_license_or_trial_status(req: StatusRequest):
     hwid = req.hwid.strip()
+    db = load_db()
 
-    if key not in db:
-        return {"valid": False, "reason": "Key not found"}
+    # 1. Check if HWID is activated with Pro Key
+    for k, info in db.items():
+        if info.get("hwid") == hwid and info.get("is_active", True):
+            return {
+                "status": "pro",
+                "is_valid": True,
+                "is_pro": True,
+                "license_type": info.get("type", "lifetime"),
+                "license_key": k,
+                "expires_at": info.get("expires_at", "ตลอดชีพ (Lifetime)")
+            }
 
-    info = db[key]
-    if not info.get("is_active", True):
-        return {"valid": False, "reason": "Key suspended"}
+    # 2. Check 7-Day Free Trial
+    trials = load_trials()
+    now = time.time()
 
-    if info.get("hwid") != hwid:
-        return {"valid": False, "reason": "HWID mismatch"}
+    if hwid not in trials:
+        trials[hwid] = {
+            "first_seen": now,
+            "first_seen_str": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "trial_days": 7
+        }
+        save_trials(trials)
 
-    info["last_check"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    db[key] = info
-    save_db(db)
+    t_info = trials[hwid]
+    first_seen = t_info.get("first_seen", now)
+    elapsed_seconds = now - first_seen
+    remaining_seconds = (7 * 86400) - elapsed_seconds
+    remaining_days = int(remaining_seconds // 86400) + 1 if remaining_seconds > 0 else 0
 
-    return {
-        "valid": True,
-        "license_type": info.get("type", "lifetime"),
-        "activated_at": info.get("activated_at")
-    }
+    if remaining_seconds > 0:
+        return {
+            "status": "trial",
+            "is_valid": True,
+            "is_pro": False,
+            "days_left": remaining_days,
+            "seconds_left": int(remaining_seconds),
+            "first_seen": t_info.get("first_seen_str")
+        }
+    else:
+        return {
+            "status": "expired",
+            "is_valid": False,
+            "is_pro": False,
+            "days_left": 0,
+            "message": "ระยะเวลาทดลองใช้ฟรี 7 วันของคุณหมดอายุแล้ว กรุณากรอก License Key เพื่อใช้งานต่อ"
+        }
 
 @app.get("/api/version/check")
 def check_update(client_version: str = "1.0.0"):
