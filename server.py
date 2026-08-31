@@ -157,7 +157,7 @@ def save_db(data):
             for k, info in data.items():
                 doc = dict(info)
                 doc["_id"] = k
-                mongo_db.licenses.update_one({"_id": k}, {"$set": doc}, upsert=True)
+                mongo_db.licenses.replace_one({"_id": k}, doc, upsert=True)
         except Exception:
             pass
 
@@ -199,7 +199,7 @@ def save_trials(data):
             for hwid, info in data.items():
                 doc = dict(info)
                 doc["_id"] = hwid
-                mongo_db.trials.update_one({"_id": hwid}, {"$set": doc}, upsert=True)
+                mongo_db.trials.replace_one({"_id": hwid}, doc, upsert=True)
         except Exception:
             pass
 
