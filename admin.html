@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👑 LOAD PLUS - Master Admin Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #090d16; color: #f8fafc; }
+  </style>
+</head>
+<body class="p-6 max-w-6xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b border-slate-800 pb-6 mb-8">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xl text-cyan-400">⚡</div>
+      <div>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">LOAD PLUS Master Admin</h1>
+        <p class="text-xs text-slate-400">ระบบควบคุม License Key และจัดการอัปเดตโปรแกรมส่วนกลาง</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <input id="adminKey" type="password" placeholder="ใส่รหัส Admin Secret" class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" value="admin1234">
+      <button onclick="fetchData()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm transition">🔄 รีเฟรช</button>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-semibold mb-1">👑 ลูกค้าที่เปิดใช้งานแล้ว (Active Pro)</div>
+      <div id="statActive" class="text-3xl font-extrabold text-cyan-400">0</div>
+    </div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-semibold mb-1">⚪ คีย์ว่างรอส่งลูกค้า (Unused)</div>
+      <div id="statUnused" class="text-3xl font-extrabold text-slate-200">0</div>
+    </div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-semibold mb-1">🚫 คีย์ที่ถูกระงับ (Suspended)</div>
+      <div id="statSuspended" class="text-3xl font-extrabold text-rose-500">0</div>
+    </div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-semibold mb-1">🚀 เวอร์ชันล่าสุด (App Version)</div>
+      <div id="statVersion" class="text-3xl font-extrabold text-emerald-400">v1.0.0</div>
+    </div>
+  </div>
+
+  <!-- Main 2-Column Controls -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
+    <!-- Key Generator Card -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
+      <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">🔑 สร้าง License Key ใหม่</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">จำนวนคีย์ที่ต้องการสร้าง:</label>
+          <select id="genCount" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+            <option value="1">1 คีย์</option>
+            <option value="5" selected>5 คีย์</option>
+            <option value="10">10 คีย์</option>
+            <option value="20">20 คีย์</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">ประเภทสิทธิ์:</label>
+          <select id="genType" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+            <option value="lifetime">⚡ Lifetime (ตลอดชีพ)</option>
+            <option value="1year">📅 1 Year (รายปี)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">บันทึกช่วยจำ (เช่น ชื่อลูกค้า / Order ID):</label>
+          <input id="genNote" type="text" placeholder="เช่น ลูกค้า Shopee #001" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <button onclick="generateKeys()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-cyan-500/20">
+          🚀 สร้างรหัสคีย์ทันที
+        </button>
+      </div>
+    </div>
+
+    <!-- Update Release Card -->
+    <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-6">
+      <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">📢 ปล่อยอัปเดตเวอร์ชันใหม่ (Push Update)</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">เลขเวอร์ชันใหม่ (Version):</label>
+          <input id="updateVer" type="text" placeholder="เช่น 1.0.1" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">ลิงก์ดาวน์โหลด (Download URL):</label>
+          <input id="updateUrl" type="text" placeholder="https://github.com/.../release.zip" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="text-xs text-slate-400 block mb-1">รายละเอียดการอัปเดต (Changelog):</label>
+        <textarea id="updateLog" rows="3" placeholder="เช่น ⚡ ปรับปรุงดาวน์โหลด YouTube 1080p 60fps ลื่นไหลขึ้น" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white"></textarea>
+      </div>
+      <button onclick="publishUpdate()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-sm transition">
+        🚀 บันทึกและปล่อยอัปเดตให้ลูกค้าทุกคน
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Licenses Table -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+      <h3 class="font-bold text-white">📋 รายการ License Key ทั้งหมดในระบบ</h3>
+      <span id="totalKeyBadge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 คีย์</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-300">
+        <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
+          <tr>
+            <th class="p-4">License Key</th>
+            <th class="p-4">ประเภท</th>
+            <th class="p-4">สถานะ</th>
+            <th class="p-4">รหัสเครื่องที่ผูก (HWID)</th>
+            <th class="p-4">บันทึก</th>
+            <th class="p-4 text-right">การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="keysTableBody" class="divide-y divide-slate-800">
+          <tr><td colspan="6" class="p-8 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    function getAdminHeader() {
+      return { 'x-admin-secret': document.getElementById('adminKey').value.trim() };
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/data`, { headers: getAdminHeader() });
+        if (!res.ok) {
+          alert("รหัส Admin Secret ไม่ถูกต้อง!");
+          return;
+        }
+        const data = await res.json();
+
+        let active = 0, unused = 0, suspended = 0;
+        const keys = Object.entries(data.licenses);
+
+        keys.forEach(([k, v]) => {
+          if (!v.is_active) suspended++;
+          else if (v.hwid) active++;
+          else unused++;
+        });
+
+        document.getElementById('statActive').innerText = active;
+        document.getElementById('statUnused').innerText = unused;
+        document.getElementById('statSuspended').innerText = suspended;
+        document.getElementById('statVersion').innerText = `v${data.state.latest_version}`;
+        document.getElementById('totalKeyBadge').innerText = `${keys.length} คีย์`;
+
+        document.getElementById('updateVer').value = data.state.latest_version;
+        document.getElementById('updateUrl').value = data.state.download_url;
+        document.getElementById('updateLog').value = data.state.changelog;
+
+        const tbody = document.getElementById('keysTableBody');
+        tbody.innerHTML = '';
+
+        if (keys.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">ยังไม่มี License Key ในระบบ</td></tr>';
+          return;
+        }
+
+        keys.reverse().forEach(([k, v]) => {
+          const isBound = !!v.hwid;
+          const statusBadge = !v.is_active
+            ? '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">🚫 ถูกระงับ</span>'
+            : (isBound
+                ? '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">✅ ใช้งานแล้ว</span>'
+                : '<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">⚪ ว่าง (พร้อมขาย)</span>');
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition';
+          tr.innerHTML = `
+            <td class="p-4 font-mono font-bold text-cyan-300 flex items-center gap-2">
+              ${k}
+              <button onclick="navigator.clipboard.writeText('${k}'); alert('คัดลอกคีย์เรียบร้อย!');" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300">📋</button>
+            </td>
+            <td class="p-4 uppercase text-xs font-semibold text-slate-300">${v.type || 'lifetime'}</td>
+            <td class="p-4">${statusBadge}</td>
+            <td class="p-4 font-mono text-xs text-slate-400">${v.hwid ? v.hwid : '<span class="text-slate-600">- ยังไม่ผูก -</span>'}</td>
+            <td class="p-4 text-xs text-slate-400">${v.note || '-'}</td>
+            <td class="p-4 text-right space-x-2">
+              ${isBound ? `<button onclick="resetHwid('${k}')" class="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs px-2.5 py-1 rounded transition">🔄 ปลดล็อกย้ายเครื่อง</button>` : ''}
+              <button onclick="toggleKeyStatus('${k}', ${!v.is_active})" class="${v.is_active ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'} text-xs px-2.5 py-1 rounded transition">
+                ${v.is_active ? '🚫 ระงับ' : '✅ เปิดสิทธิ์'}
+              </button>
+              <button onclick="deleteKey('${k}')" class="bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-300 text-xs px-2 py-1 rounded transition">🗑️</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        alert("เชื่อมต่อ Backend ไม่สำเร็จ: " + err.message);
+      }
+    }
+
+    async function generateKeys() {
+      const count = parseInt(document.getElementById('genCount').value);
+      const key_type = document.getElementById('genType').value;
+      const note = document.getElementById('genNote').value.trim();
+
+      const res = await fetch(`${API_BASE}/api/admin/generate`, {
+        method: 'POST',
+        headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count, key_type, note })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert(`🎉 สร้างสำเร็จ ${data.count} คีย์!\n\n` + data.keys.join('\n'));
+        document.getElementById('genNote').value = '';
+        fetchData();
+      } else {
+        alert("เกิดข้อผิดพลาดในการสร้างคีย์");
+      }
+    }
+
+    async function resetHwid(key) {
+      if (!confirm(`ต้องการปลดล็อกคีย์ ${key} เพื่อให้ลูกค้าย้ายเครื่องใช่หรือไม่?`)) return;
+      const res = await fetch(`${API_BASE}/api/admin/action`, {
+        method: 'POST',
+        headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_hwid', key })
+      });
+      if (res.ok) { alert("ปลดล็อก HWID สำเร็จ! ลูกค้าสามารถนำคีย์ไปใส่เครื่องใหม่ได้แล้ว"); fetchData(); }
+    }
+
+    async function toggleKeyStatus(key, enable) {
+      const res = await fetch(`${API_BASE}/api/admin/action`, {
+        method: 'POST',
+        headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle_status', key, is_active: enable })
+      });
+      if (res.ok) { fetchData(); }
+    }
+
+    async function deleteKey(key) {
+      if (!confirm(`ลบ License Key: ${key} ออกจากระบบถาวรใช่หรือไม่?`)) return;
+      const res = await fetch(`${API_BASE}/api/admin/action`, {
+        method: 'POST',
+        headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_key', key })
+      });
+      if (res.ok) { fetchData(); }
+    }
+
+    async function publishUpdate() {
+      const latest_version = document.getElementById('updateVer').value.trim();
+      const download_url = document.getElementById('updateUrl').value.trim();
+      const changelog = document.getElementById('updateLog').value.trim();
+
+      const res = await fetch(`${API_BASE}/api/admin/update_state`, {
+        method: 'POST',
+        headers: { ...getAdminHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latest_version, download_url, changelog })
+      });
+
+      if (res.ok) {
+        alert("📢 ปล่อยเวอร์ชันอัปเดตเรียบร้อย! โปรแกรมของผู้ใช้ทุกคนจะได้รับการแจ้งเตือนอัตโนมัติ");
+        fetchData();
+      }
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
