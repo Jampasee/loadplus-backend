@@ -18,7 +18,7 @@
       <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xl text-cyan-400">⚡</div>
       <div>
         <h1 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">LOAD PLUS Master Admin</h1>
-        <p class="text-xs text-slate-400">ระบบควบคุม License Key และจัดการอัปเดตโปรแกรมส่วนกลาง</p>
+        <p class="text-xs text-slate-400">ระบบควบคุม License Key, จัดการผู้ใช้ทดลองฟรี และปล่อยอัปเดตโปรแกรม</p>
       </div>
     </div>
     <div class="flex items-center gap-3">
@@ -28,22 +28,26 @@
   </div>
 
   <!-- Stats Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-      <div class="text-slate-400 text-xs font-semibold mb-1">👑 ลูกค้าที่เปิดใช้งานแล้ว (Active Pro)</div>
-      <div id="statActive" class="text-3xl font-extrabold text-cyan-400">0</div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+      <div class="text-slate-400 text-xs font-semibold mb-1">👑 ลูกค้า Pro (Active)</div>
+      <div id="statActive" class="text-2xl font-extrabold text-cyan-400">0</div>
     </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-      <div class="text-slate-400 text-xs font-semibold mb-1">⚪ คีย์ว่างรอส่งลูกค้า (Unused)</div>
-      <div id="statUnused" class="text-3xl font-extrabold text-slate-200">0</div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+      <div class="text-slate-400 text-xs font-semibold mb-1">⏳ กำลังทดลองฟรี (Trial)</div>
+      <div id="statTrial" class="text-2xl font-extrabold text-amber-400">0</div>
     </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-      <div class="text-slate-400 text-xs font-semibold mb-1">🚫 คีย์ที่ถูกระงับ (Suspended)</div>
-      <div id="statSuspended" class="text-3xl font-extrabold text-rose-500">0</div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+      <div class="text-slate-400 text-xs font-semibold mb-1">⚪ คีย์ว่างรอขาย (Unused)</div>
+      <div id="statUnused" class="text-2xl font-extrabold text-slate-200">0</div>
     </div>
-    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-      <div class="text-slate-400 text-xs font-semibold mb-1">🚀 เวอร์ชันล่าสุด (App Version)</div>
-      <div id="statVersion" class="text-3xl font-extrabold text-emerald-400">v1.0.0</div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+      <div class="text-slate-400 text-xs font-semibold mb-1">🚫 คีย์ถูกระงับ</div>
+      <div id="statSuspended" class="text-2xl font-extrabold text-rose-500">0</div>
+    </div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+      <div class="text-slate-400 text-xs font-semibold mb-1">🚀 เวอร์ชันล่าสุด</div>
+      <div id="statVersion" class="text-2xl font-extrabold text-emerald-400">v1.0.4</div>
     </div>
   </div>
 
@@ -86,7 +90,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label class="text-xs text-slate-400 block mb-1">เลขเวอร์ชันใหม่ (Version):</label>
-          <input id="updateVer" type="text" placeholder="เช่น 1.0.1" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+          <input id="updateVer" type="text" placeholder="เช่น 1.0.4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
         </div>
         <div>
           <label class="text-xs text-slate-400 block mb-1">ลิงก์ดาวน์โหลด (Download URL):</label>
@@ -95,7 +99,7 @@
       </div>
       <div class="mb-4">
         <label class="text-xs text-slate-400 block mb-1">รายละเอียดการอัปเดต (Changelog):</label>
-        <textarea id="updateLog" rows="3" placeholder="เช่น ⚡ ปรับปรุงดาวน์โหลด YouTube 1080p 60fps ลื่นไหลขึ้น" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white"></textarea>
+        <textarea id="updateLog" rows="3" placeholder="เช่น ⚡ เพิ่มระบบทดลองใช้ฟรี 7 วัน ผูก HWID และแก้ไขปุ่มเสียง" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white"></textarea>
       </div>
       <button onclick="publishUpdate()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-sm transition">
         🚀 บันทึกและปล่อยอัปเดตให้ลูกค้าทุกคน
@@ -104,10 +108,40 @@
 
   </div>
 
+  <!-- Free Trial Devices Table -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden mb-8">
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-amber-400 text-lg">⏳</span>
+        <h3 class="font-bold text-white">รายชื่อเครื่องที่โหลดไปทดลองใช้ฟรี (Free Trial Devices)</h3>
+      </div>
+      <span id="totalTrialBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 เครื่อง</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-300">
+        <thead class="bg-slate-950 text-xs uppercase text-slate-400 border-b border-slate-800">
+          <tr>
+            <th class="p-4">รหัสเครื่อง (HWID)</th>
+            <th class="p-4">วันที่เปิดใช้ครั้งแรก</th>
+            <th class="p-4">เวลาที่เหลือ</th>
+            <th class="p-4">สถานะ</th>
+            <th class="p-4 text-right">การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="trialTableBody" class="divide-y divide-slate-800">
+          <tr><td colspan="5" class="p-6 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Licenses Table -->
   <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
     <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-      <h3 class="font-bold text-white">📋 รายการ License Key ทั้งหมดในระบบ</h3>
+      <div class="flex items-center gap-2">
+        <span class="text-cyan-400 text-lg">🔑</span>
+        <h3 class="font-bold text-white">รายการ License Key ทั้งหมดในระบบ</h3>
+      </div>
       <span id="totalKeyBadge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs px-3 py-1 rounded-full font-semibold">0 คีย์</span>
     </div>
     <div class="overflow-x-auto">
@@ -132,7 +166,6 @@
   <script>
     const API_BASE = window.location.origin;
 
-    // Auto-load saved key from localStorage if available
     const savedKey = localStorage.getItem('lp_admin_key');
     if (savedKey) {
       document.getElementById('adminKey').value = savedKey;
@@ -153,25 +186,80 @@
         }
         const data = await res.json();
 
+        // 1. License Stats
         let active = 0, unused = 0, suspended = 0;
-        const keys = Object.entries(data.licenses);
+        const keys = Object.entries(data.licenses || {});
+        const proHwids = new Set();
 
         keys.forEach(([k, v]) => {
           if (!v.is_active) suspended++;
-          else if (v.hwid) active++;
-          else unused++;
+          else if (v.hwid) {
+            active++;
+            proHwids.add(v.hwid);
+          } else unused++;
         });
 
+        // 2. Free Trial Devices
+        const trials = Object.entries(data.trials || {});
+        let activeTrialCount = 0;
+        const now = Date.now() / 1000;
+
+        const trialBody = document.getElementById('trialTableBody');
+        trialBody.innerHTML = '';
+
+        if (trials.length === 0) {
+          trialBody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500">ยังไม่มีประวัติเครื่องที่เปิดทดลองใช้ฟรี</td></tr>';
+        } else {
+          trials.reverse().forEach(([hwid, t]) => {
+            const firstSeen = t.first_seen || now;
+            const elapsed = now - firstSeen;
+            const remaining = (7 * 86400) - elapsed;
+            const daysLeft = Math.max(0, Math.floor(remaining / 86400) + 1);
+            const isPro = proHwids.has(hwid);
+
+            let statusBadge = '';
+            let timeLeftStr = '';
+
+            if (isPro) {
+              statusBadge = '<span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">🌟 ซื้อ Pro แล้ว</span>';
+              timeLeftStr = '<span class="text-cyan-400 font-bold">ตลอดชีพ</span>';
+            } else if (remaining > 0) {
+              activeTrialCount++;
+              statusBadge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">⏳ กำลังทดลองใช้</span>';
+              timeLeftStr = `<span class="text-amber-300 font-semibold">เหลือ ${daysLeft} วัน</span>`;
+            } else {
+              statusBadge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">🔴 หมดเวลา 7 วัน</span>';
+              timeLeftStr = '<span class="text-rose-400 font-semibold">หมดอายุแล้ว</span>';
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-800/40 transition';
+            tr.innerHTML = `
+              <td class="p-4 font-mono text-xs font-bold text-slate-200">${hwid}</td>
+              <td class="p-4 text-xs text-slate-400">${t.first_seen_str || '-'}</td>
+              <td class="p-4 text-xs">${timeLeftStr}</td>
+              <td class="p-4">${statusBadge}</td>
+              <td class="p-4 text-right">
+                <button onclick="navigator.clipboard.writeText('${hwid}'); alert('คัดลอก HWID แล้ว!');" class="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded text-slate-300">📋 ก๊อปปี้ HWID</button>
+              </td>
+            `;
+            trialBody.appendChild(tr);
+          });
+        }
+
         document.getElementById('statActive').innerText = active;
+        document.getElementById('statTrial').innerText = activeTrialCount;
         document.getElementById('statUnused').innerText = unused;
         document.getElementById('statSuspended').innerText = suspended;
         document.getElementById('statVersion').innerText = `v${data.state.latest_version}`;
+        document.getElementById('totalTrialBadge').innerText = `${trials.length} เครื่อง`;
         document.getElementById('totalKeyBadge').innerText = `${keys.length} คีย์`;
 
         document.getElementById('updateVer').value = data.state.latest_version;
         document.getElementById('updateUrl').value = data.state.download_url;
         document.getElementById('updateLog').value = data.state.changelog;
 
+        // 3. Render Keys Table
         const tbody = document.getElementById('keysTableBody');
         tbody.innerHTML = '';
 
